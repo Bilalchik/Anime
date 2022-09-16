@@ -132,13 +132,19 @@ class Season(models.Model):
     anime = models.ForeignKey(
         Anime,
         on_delete=models.PROTECT,
-        verbose_name='Аниме'
+        verbose_name='Аниме',
+        related_name='seasons'
     )
     name = models.CharField(
         max_length=125,
         verbose_name='Название сезона'
     )
-
+    total_episodes_count = models.PositiveSmallIntegerField(
+        verbose_name='Общее количество серий которые планируются'
+    )
+    total_episodes_released_count = models.PositiveSmallIntegerField(
+        verbose_name='Общее количество серий которые вышли'
+    )
     date_publish = models.DateField(
         verbose_name='Дата выпуска сезона'
     )
@@ -155,7 +161,8 @@ class Episode(models.Model):
     season = models.ForeignKey(
         Season,
         on_delete=models.PROTECT,
-        verbose_name='Сезон'
+        verbose_name='Сезон',
+        related_name='episodes'
     )
     name = models.CharField(
         max_length=125,
