@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 
 class Studio(models.Model):
@@ -19,6 +20,11 @@ class Genre(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class AnimeManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().exclude(Q(status='В бане')|Q(status='Редактура'))
 
 
 class Anime(models.Model):
@@ -119,6 +125,8 @@ class Anime(models.Model):
         Studio,
         verbose_name='Студии'
     )
+
+    objects = AnimeManager()
 
     def __str__(self):
         return self.title_ru
