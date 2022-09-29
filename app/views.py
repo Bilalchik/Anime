@@ -96,10 +96,8 @@ def anime_categories(request):
 
         genre = request.GET.get('genre')
         anime_genres = Anime.objects.filter(genres__name=genre)
-        print(genre)
-        print(anime_genres)
 
-        p = Paginator(anime_genres, 5)  # creating a paginator object
+        p = Paginator(anime_genres, 1)  # creating a paginator object
         # getting the desired page number from url
         page_number = request.GET.get('page')
         try:
@@ -114,5 +112,6 @@ def anime_categories(request):
     return render(request, template_name='app/categories.html', context={'genres': genres,
                                                                          'all_anime': all_anime,
                                                                          'anime_genres': anime_genres,
-                                                                         'page_obj': page_obj})
+                                                                         'page_obj': page_obj,
+                                                                         "genre": genre})
 
