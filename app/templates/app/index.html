@@ -82,7 +82,7 @@
                                                     <li>{{ genre.name }}</li>
                                                 {% endfor %}
                                             </ul>
-                                            <h5><a href="#">{{ anime.title_ru }}</a></h5>
+                                            <h5><a href="{% url 'anime_detail' anime.slug %}">{{ anime.title_ru }}</a></h5>
                                         </div>
                                     </div>
                                 </div>

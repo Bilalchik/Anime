@@ -1,6 +1,10 @@
-from django.db import models
-from django.db.models import Q
+from django.core.validators import MaxValueValidator, MinValueValidator
 
+from django.db import models
+from django.db.models import Q, Avg
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Studio(models.Model):
     name = models.CharField(
@@ -33,6 +37,7 @@ class Anime(models.Model):
         max_length=125,
         verbose_name='название на русском'
     )
+    slug = models.SlugField()
     title_en = models.CharField(
         max_length=125,
         verbose_name='название на английском'
@@ -103,6 +108,12 @@ class Anime(models.Model):
     count_of_views = models.PositiveIntegerField(
         verbose_name='Количество просмотров'
     )
+    count_of_votes = models.PositiveIntegerField(
+        verbose_name='Количество оценок'
+    )
+    count_of_comments = models.PositiveIntegerField(
+        verbose_name='Количество комментариев'
+    )
     created_date = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Дата создания записи'
@@ -119,11 +130,13 @@ class Anime(models.Model):
     )
     genres = models.ManyToManyField(
         Genre,
-        verbose_name='Жанры'
+        verbose_name='Жанры',
+        related_name='genres'
     )
     studios = models.ManyToManyField(
         Studio,
-        verbose_name='Студии'
+        verbose_name='Студии',
+        related_name='studios'
     )
 
     objects = AnimeManager()
@@ -142,6 +155,9 @@ class Season(models.Model):
         on_delete=models.PROTECT,
         verbose_name='Аниме',
         related_name='seasons'
+    )
+    number = models.PositiveSmallIntegerField(
+        verbose_name='Номер сезона'
     )
     name = models.CharField(
         max_length=125,
@@ -172,6 +188,12 @@ class Episode(models.Model):
         verbose_name='Сезон',
         related_name='episodes'
     )
+    number = models.PositiveSmallIntegerField(
+        verbose_name='Номер эпизода'
+    )
+    file = models.FileField(
+        upload_to='media/files/'
+    )
     name = models.CharField(
         max_length=125,
         verbose_name='Название эпизода'
@@ -196,4 +218,55 @@ class Episode(models.Model):
 
     def __str__(self):
         return f'{self.season} {self.name}'
+
+    def save(self, *args, **kwargs):
+        self.season.total_episodes_released_count += 1
+        self.season.save()
+
+        super().save(*args, **kwargs)
+
+
+class AnimeReview(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    anime = models.ForeignKey(
+        Anime,
+        on_delete=models.CASCADE,
+        related_name='comments'
+                              )
+    created_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=(
+            MaxValueValidator(limit_value=5),
+            MinValueValidator(limit_value=1)
+        )
+    )
+    body = models.TextField(verbose_name='Комментарий')
+
+    def save(self, *args, **kwargs):
+
+        anime_review_instance = super(AnimeReview, self).save(*args, **kwargs)
+
+        self.anime.count_of_comments += 1
+        self.anime.count_of_votes += 1
+        self.anime.rating = round(Anime.objects.annotate(rate=Avg('comments__rating')).get(pk=self.anime.pk).rate, 1)
+        self.anime.save()
+
+        return anime_review_instance
+
+
+class AnimeEpisodeReview(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    episode = models.ForeignKey(
+        Episode,
+        on_delete=models.CASCADE,
+    )
+    created_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата публикации'
+    )
+    body = models.TextField(verbose_name='Коментарий')
+
 

@@ -49,6 +49,7 @@ class MyUser(AbstractBaseUser):
     )
     login = models.CharField(max_length=50, unique=True)
     date_of_birth = models.DateField()
+    password = models.CharField(max_length=20)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
 
